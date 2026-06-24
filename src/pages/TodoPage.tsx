@@ -1,36 +1,38 @@
-import { useEffect, useState } from "react"
-// This gives access to getToken() to authenticate API requests
-import { useAuth } from "@clerk/react"
-import type { Todo } from "@/types/todo"
-import { getTodos, createTodo, toggleTodo, deleteTodo } from "@/lib/api"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useEffect, useState } from 'react'
+import { useAuth } from '@clerk/react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+
+const API_URL = import.meta.env.VITE_API_URL
+
+interface Todo {
+  id: string
+  title: string
+  completed: boolean
+}
 
 export function TodoPage() {
-  // This retrieves the Clerk session token for authenticated API calls
   const { getToken } = useAuth()
   const [todos, setTodos] = useState<Todo[]>([])
-  const [input, setInput] = useState("")
+  const [input, setInput] = useState('')
+  const [token, setToken] = useState<string | null>(null)
 
-  // TASK 2: On mount, fetch todos from the backend and set state
-  // Hint: call getToken() to get the token, then pass it to getTodos()
-  // Docs: https://clerk.com/docs/references/react/use-auth
-  useEffect(() => {}, [])
+  // TASK 2: Fetch the Clerk token using getToken() and store it in setToken()
+  //         Then fetch GET /todos with Authorization: Bearer <token>
+  //         and call setTodos() with the response
+  useEffect(() => {}, [getToken])
 
-  // TASK 3: On submit, call createTodo and append the result to todos state
-  // Hint: don't forget to clear the input after adding
-  // Docs: https://www.prisma.io/docs/orm/prisma-client/queries/crud#create
+  // TASK 3: POST /todos with { title: input.trim() } and Authorization header
+  //         Append the returned todo to todos state and clear input
   const handleAdd = async () => {}
 
-  // TASK 4: On checkbox change, call toggleTodo and update the matching todo in state
-  // Hint: use setTodos and map over todos to flip the completed field
-  // Docs: https://www.prisma.io/docs/orm/prisma-client/queries/crud#update
+  // TASK 4: PATCH /todos/:id with { completed: !todo.completed } and Authorization header
+  //         Update the matching todo in todos state with the returned updated todo
   const handleToggle = async (todo: Todo) => {}
 
-  // TASK 5: On delete, call deleteTodo and remove the todo from state
-  // Hint: use setTodos and filter out the deleted todo by id
-  // Docs: https://www.prisma.io/docs/orm/prisma-client/queries/crud#delete
+  // TASK 5: DELETE /todos/:id with Authorization header
+  //         Remove the todo from todos state by filtering out the deleted id
   const handleDelete = async (id: string) => {}
 
   return (
@@ -40,35 +42,24 @@ export function TodoPage() {
           placeholder="Add a new todo..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+          onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
         />
         <Button onClick={handleAdd}>Add</Button>
       </div>
 
       <ul className="space-y-2">
         {todos.map((todo) => (
-          <li
-            key={todo.id}
-            className="flex items-center justify-between rounded border p-3"
-          >
+          <li key={todo.id} className="flex items-center justify-between border rounded p-3">
             <div className="flex items-center gap-3">
               <Checkbox
                 checked={todo.completed}
                 onCheckedChange={() => handleToggle(todo)}
               />
-              <span
-                className={
-                  todo.completed ? "text-muted-foreground line-through" : ""
-                }
-              >
+              <span className={todo.completed ? 'line-through text-muted-foreground' : ''}>
                 {todo.title}
               </span>
             </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => handleDelete(todo.id)}
-            >
+            <Button variant="destructive" size="sm" onClick={() => handleDelete(todo.id)}>
               Delete
             </Button>
           </li>
