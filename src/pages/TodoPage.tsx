@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { useAuth } from '@clerk/react'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
+import { useEffect, useState } from "react"
+import { useAuth } from "@clerk/react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -15,24 +15,44 @@ interface Todo {
 export function TodoPage() {
   const { getToken } = useAuth()
   const [todos, setTodos] = useState<Todo[]>([])
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState("")
   const [token, setToken] = useState<string | null>(null)
 
-  // TASK 2: Fetch the Clerk token using getToken() and store it in setToken()
-  //         Then fetch GET /todos with Authorization: Bearer <token>
-  //         and call setTodos() with the response
-  useEffect(() => {}, [getToken])
+  // This fetches the Clerk token once and loads all todos on mount
+  useEffect(() => {
+    const init = async () => {
+      const t = await getToken()
+      setToken(t)
 
-  // TASK 3: POST /todos with { title: input.trim() } and Authorization header
-  //         Append the returned todo to todos state and clear input
-  const handleAdd = async () => {}
+      const res = await fetch(`${API_URL}/todos`, {
+        headers: { Authorization: `Bearer ${t}` },
+      })
+      const data = await res.json()
+      setTodos(data)
+    }
+    init()
+  }, [getToken])
 
-  // TASK 4: PATCH /todos/:id with { completed: !todo.completed } and Authorization header
-  //         Update the matching todo in todos state with the returned updated todo
+  // This creates a new todo and adds it to the list
+  const handleAdd = async () => {
+    if (!input.trim() || !token) return
+    const res = await fetch(`${API_URL}/todos`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ title: input.trim() }),
+    })
+    const todo = await res.json()
+    setTodos((prev) => [...prev, todo])
+    setInput("")
+  }
+
+  // This toggles the completed status of a todo
   const handleToggle = async (todo: Todo) => {}
 
-  // TASK 5: DELETE /todos/:id with Authorization header
-  //         Remove the todo from todos state by filtering out the deleted id
+  // This deletes a todo and removes it from the list
   const handleDelete = async (id: string) => {}
 
   return (
@@ -42,24 +62,35 @@ export function TodoPage() {
           placeholder="Add a new todo..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />
         <Button onClick={handleAdd}>Add</Button>
       </div>
 
       <ul className="space-y-2">
         {todos.map((todo) => (
-          <li key={todo.id} className="flex items-center justify-between border rounded p-3">
+          <li
+            key={todo.id}
+            className="flex items-center justify-between rounded border p-3"
+          >
             <div className="flex items-center gap-3">
               <Checkbox
                 checked={todo.completed}
                 onCheckedChange={() => handleToggle(todo)}
               />
-              <span className={todo.completed ? 'line-through text-muted-foreground' : ''}>
+              <span
+                className={
+                  todo.completed ? "text-muted-foreground line-through" : ""
+                }
+              >
                 {todo.title}
               </span>
             </div>
-            <Button variant="destructive" size="sm" onClick={() => handleDelete(todo.id)}>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => handleDelete(todo.id)}
+            >
               Delete
             </Button>
           </li>
